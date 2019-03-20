@@ -137,7 +137,9 @@ def main(args):
                         if ret:
 
                             # resized_image = cv2.resize(frame, (320, 240))
-                            resized_image = cv2.resize(frame, (640, 480))
+                            width  = int(video_capture.get(cv2.CAP_PROP_FRAME_WIDTH)*args.resize)
+                            height = int(video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT)*args.resize)
+                            resized_image = cv2.resize(frame, (width, height))
 
                             start_time = time.time()*1000
 
@@ -213,6 +215,8 @@ def parse_arguments(argv):
         nargs=3,
         help='Three thresholds for pnet, rnet, onet, respectively.',
         default=[0.8, 0.8, 0.8])
+    parser.add_argument('--resize', type=float,
+                        help='The resize size of frame to detect.', default=1.0)
     parser.add_argument('--minsize', type=int,
                         help='The minimum size of face to detect.', default=20)
     parser.add_argument('--factor', type=float,
