@@ -39,14 +39,22 @@ def main(args):
     totalTime = 0.0
     frameCount = 0
 
-
+    # Does there need store result images or not
+    # If yes, check the directory which store result is existed or not
+    # If the directory is existed, delete the directory recursively then recreate the directory.
     if args.save_image:
-        output_directory = args.save_path
+        output_directory = args.save_output_path
         print(args.save_image)
         if os.path.exists(output_directory):
             shutil.rmtree(output_directory)
-        else:
-            os.mkdir(output_directory)
+        os.mkdir(output_directory)
+
+    # The steps are similiar to "store result images" above.
+    if args.save_camera_images:
+        source_directory = args.save_camera_images_path
+        if os.path.exists(source_directory):
+            shutil.rmtree(source_directory)
+        os.mkdir(source_directory)
 
     with tf.device('/cpu:0'):
         with tf.Graph().as_default():
@@ -56,6 +64,10 @@ def main(args):
                 file_paths = get_model_filenames(args.model_dir)
                 print(file_paths, len(file_paths))
 
+                # The if else statement is to check which type of model user used.
+                # if the if condition is true, which means user use separate P-Net, R-Net and O-Net models.
+                # In anaconda bash to type the command line which is "python test_camera.py --model_dir model/separate".
+                # And there are three folders which are P-Net, R-Net and O-Net in the named separate directory. 
                 if len(file_paths) == 3:
                     image_pnet = tf.placeholder(
                         tf.float32, [None, None, None, 3])
@@ -117,8 +129,6 @@ def main(args):
                         'onet/conv6-3/onet/conv6-3:0'),
                         feed_dict={
                             'Placeholder_2:0': img})
-
-                # for filename in os.listdir(args.image_path):
 
                 video_capture = cv2.VideoCapture(0)
                 print(video_capture.get(cv2.CAP_PROP_FRAME_WIDTH), video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -189,6 +199,9 @@ def main(args):
                             if args.save_image:
                                 outputFilePath = os.path.join(output_directory, str(frameCount) + ".jpg")
                                 cv2.imwrite(outputFilePath, resized_image)
+                            if args.save_camera_images:
+                                sourceFilePath = os.path.join(source_directory, str(frameCount) + ".jpg")
+                                cv2.imwrite(sourceFilePath, frame)
                             if cv2.waitKey(1) & 0xFF == ord('q'):
                                 cv2.destroyAllWindows()
                                 break
@@ -198,6 +211,7 @@ def main(args):
                     video_capture.release()
         
                     detect_average_time = detect_totalTime/frameCount
+                    print("*" * 50)
                     print("detection average time: " + str(detect_average_time) + "ms" )
                     print("detection fps: " + str(1/(detect_average_time/1000)))
 
@@ -223,8 +237,12 @@ def parse_arguments(argv):
                         help='The scale stride of orginal image', default=0.7)
     parser.add_argument('--save_image', type=bool,
                         help='Whether to save the result image', default=False)
-    parser.add_argument('--save_path', type=str,
-                        help='Where to save the result image', default=False)                    
+    parser.add_argument('--save_output_path', type=str,
+                        help='Where to save the result image', default=False)  
+    parser.add_argument('--save_camera_images', type=bool,
+                        help='Whether to save camera images', default=False)
+    parser.add_argument('--save_camera_images_path', type=str,
+                        help='Where to save the source images', default=False)               
 
     return parser.parse_args(argv)
 
