@@ -120,8 +120,11 @@ def main(args):
                 for filename in os.listdir(args.image_path):
 
                     img = cv2.imread(os.path.join(args.image_path, filename))
-                    resized_image = cv2.resize(img, (320, 180))
-                    # resized_image = cv2.resize(img, (640, 360))
+                    # resized_image = cv2.resize(img, (320, 180))
+                    height, width, _ = img.shape
+                    width  = int(width*args.resize)
+                    height = int(height*args.resize)
+                    resized_image = cv2.resize(img, (width, height))
 
                     start_time = time.time()*1000
 
@@ -147,7 +150,8 @@ def main(args):
                     end_time = time.time()*1000
                     detect_totalTime = detect_totalTime + (end_time - start_time)
 
-                    print(filename + " time : " + str(end_time - start_time) + "ms")
+                    # print(filename + " time : " + str(end_time - start_time) + "ms")
+                    print(str(frameCount) + " time : " + str(end_time - start_time) + "ms")
 
                     # print(type(rectangles))
                     if args.net == "ALL":
@@ -166,7 +170,7 @@ def main(args):
                             for i in range(0, 10, 2):
                                 cv2.circle(resized_image, (int(point[i]), int(
                                     point[i + 1])), 2, (0, 255, 0))
-                    cv2.imshow("MTCNN-Tensorflow wangbm", resized_image)
+                    cv2.imshow("MTCNN-Tenssorflow wangbm", resized_image)
                     frameCount = frameCount + 1
                     if args.save_image:
                         outputFilePath = os.path.join(output_directory, filename)
@@ -176,6 +180,7 @@ def main(args):
                         break
         
     detect_average_time = detect_totalTime/frameCount
+    print("*" * 50)
     print("detection average time: " + str(detect_average_time) + "ms" )
     print("detection fps: " + str(1/(detect_average_time/1000)))
 
@@ -196,6 +201,8 @@ def parse_arguments(argv):
         nargs=3,
         help='Three thresholds for pnet, rnet, onet, respectively.',
         default=[0.8, 0.8, 0.8])
+    parser.add_argument('--resize', type=float,
+                        help='The resize size of frame to detect.', default=1.0)
     parser.add_argument('--minsize', type=int,
                         help='The minimum size of face to detect.', default=20)
     parser.add_argument('--factor', type=float,
