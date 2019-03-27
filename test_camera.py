@@ -62,9 +62,8 @@ def add_overlays(frame, faces, points, frame_rate, bb_w_scale, bb_h_scale):
 def main(args):
 
     detect_totalTime = 0.0
-    totalTime = 0.0
     frameCount = 0
-    
+
     # Does there need store result images or not
     # If yes, check the directory which store result is existed or not
     # If the directory is existed, delete the directory recursively then recreate the directory.
@@ -171,7 +170,7 @@ def main(args):
                     while True:
 
                         ret, frame = video_capture.read()
-                        original_img = frame
+                        original_img = frame.copy()
 
                         if ret:
 
@@ -213,7 +212,7 @@ def main(args):
 
                             add_overlays(frame, rectangles, points, 1000/(end_time - start_time), 1/args.resize, 1/args.resize)
                             cv2.imshow("MTCNN-Tensorflow wangbm", frame)
-                            
+
                             if args.save_image:
                                 outputFilePath = os.path.join(output_directory, str(frameCount) + ".jpg")
                                 cv2.imwrite(outputFilePath, frame)
@@ -223,18 +222,18 @@ def main(args):
                                 sourceFilePath = os.path.join(source_directory, str(frameCount) + ".jpg")
                                 cv2.imwrite(sourceFilePath, original_img)
 
+                            frameCount = frameCount + 1
+
                             if cv2.waitKey(1) & 0xFF == ord('q'):
                                 cv2.destroyAllWindows()
                                 break
-
-                            frameCount = frameCount + 1
 
                     video_capture.release()
         
                     detect_average_time = detect_totalTime/frameCount
                     print("*" * 50)
                     print("detection average time: " + str(detect_average_time) + "ms" )
-                    print("detection fps: " + str(1/(detect_average_time/1000)))
+                    print("detection fps: " + str(1000/detect_average_time))
 
 def parse_arguments(argv):
 
