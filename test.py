@@ -212,7 +212,8 @@ def main(args):
                     if args.save_image:
                         outputFilePath = os.path.join(output_directory, filename)
                         cv2.imwrite(outputFilePath, img)
-                        fw.write('{:s} {:.3f} {:.1f} {:.1f} {:.1f} {:.1f}\n'.format(filename[:-4], rectangles[4], rectangles[0], rectangles[1], rectangles[2], rectangles[3]))
+                        for rectangle in rectangles:
+                            fw.write('{:s} {:.3f} {:.1f} {:.1f} {:.1f} {:.1f}\n'.format(filename[:-4], rectangle[4], rectangle[0], rectangle[1], rectangle[2], rectangle[3]))
 
                     if cv2.waitKey(1) & 0xFF == ord('q'):
                         cv2.destroyAllWindows()
