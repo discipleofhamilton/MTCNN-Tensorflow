@@ -33,20 +33,48 @@ import numpy as np
 from src.mtcnn import PNet, RNet, ONet
 from tools import detect_face, get_model_filenames, detect_face_24net, detect_face_12net
 
+def add_overlays(frame, faces, points, frame_rate, bb_w_scale, bb_h_scale):
+    if faces is not None:
+        for face in faces:
+            face[0] = face[0] * bb_w_scale
+            face[1] = face[1] * bb_h_scale
+            face[2] = face[2] * bb_w_scale
+            face[3] = face[3] * bb_h_scale
+            cv2.rectangle(frame,
+                          (int(face[0]), int(face[1])), (int(face[2]), int(face[3])),
+                          (0, 255, 0), 1)
+
+            cv2.putText(frame, "Person", (int(face[0]), int(face[3])),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0),
+                        thickness=2, lineType=1)
+
+    if points is not None:
+        for point in points:
+            for i in range(0, 10, 2):
+                point[i]   = point[i] * bb_w_scale
+                point[i+1] = point[i+1] * bb_h_scale
+                cv2.circle(frame, (int(point[i]), int(point[i + 1])), 2, (0, 255, 0))
+
+    cv2.putText(frame, str(frame_rate) + " fps", (10, 30),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0),
+                thickness=2, lineType=2)
+
 def main(args):
 
     detect_totalTime = 0.0
-    totalTime = 0.0
     frameCount = 0
 
-
+    # Does there need store result images or not
+    # If yes, check the directory which store result is existed or not
+    # If the directory is existed, delete the directory recursively then recreate the directory.
     if args.save_image:
-        output_directory = args.save_path
+        output_directory = args.save_image
         print(args.save_image)
         if os.path.exists(output_directory):
             shutil.rmtree(output_directory)
-        else:
-            os.mkdir(output_directory)
+        os.mkdir(output_directory)
+        fw = open(os.path.join(output_directory, args.save_bbox_coordinates + '_dets.txt'), 'w')
+
 
     with tf.device('/cpu:0'):
         with tf.Graph().as_default():
@@ -55,6 +83,10 @@ def main(args):
 
                 file_paths = get_model_filenames(args.model_dir)
 
+                # The if else statement is to check which type of model user used.
+                # if the if condition is true, which means user use separate P-Net, R-Net and O-Net models.
+                # In anaconda bash to type the command line which is "python test_camera.py --model_dir model/separate".
+                # And there are three folders which are P-Net, R-Net and O-Net in the named separate directory. 
                 if len(file_paths) == 3:
                     image_pnet = tf.placeholder(
                         tf.float32, [None, None, None, 3])
@@ -120,10 +152,10 @@ def main(args):
                 for filename in os.listdir(args.image_path):
 
                     img = cv2.imread(os.path.join(args.image_path, filename))
-                    # resized_image = cv2.resize(img, (320, 180))
                     height, width, _ = img.shape
-                    width  = int(width*args.resize)
-                    height = int(height*args.resize)
+                    orginal_img = img.copy()
+                    width  = int(width * args.resize)
+                    height = int(height * args.resize)
                     resized_image = cv2.resize(img, (width, height))
 
                     start_time = time.time()*1000
@@ -147,34 +179,41 @@ def main(args):
 
                     else:
                         print("ERROR: WRONG NET INPUT")
+
                     end_time = time.time()*1000
                     detect_totalTime = detect_totalTime + (end_time - start_time)
 
-                    # print(filename + " time : " + str(end_time - start_time) + "ms")
                     print(str(frameCount) + " time : " + str(end_time - start_time) + "ms")
 
-                    # print(type(rectangles))
                     if args.net == "ALL":
                         points = np.transpose(points) # The outputs of O-Net which are faces' landmarks
-                    for rectangle in rectangles:
-                        cv2.putText(resized_image, str(rectangle[4]),
-                                    (int(rectangle[0]), int(rectangle[1])),
-                                    cv2.FONT_HERSHEY_SIMPLEX,
-                                    0.5, (0, 255, 0))
-                        cv2.rectangle(resized_image, (int(rectangle[0]), int(rectangle[1])),
-                                    (int(rectangle[2]), int(rectangle[3])),
-                                    (255, 0, 0), 1)
+                    else:
+                        points = None # the others
 
-                    if args.net == "ALL":
-                        for point in points:
-                            for i in range(0, 10, 2):
-                                cv2.circle(resized_image, (int(point[i]), int(
-                                    point[i + 1])), 2, (0, 255, 0))
-                    cv2.imshow("MTCNN-Tenssorflow wangbm", resized_image)
+                    add_overlays(img, rectangles, points, 1000/(end_time - start_time), 1/args.resize, 1/args.resize)
+                    
+                    # for rectangle in rectangles:
+                    #     cv2.putText(resized_image, str(rectangle[4]),
+                    #                 (int(rectangle[0]), int(rectangle[1])),
+                    #                 cv2.FONT_HERSHEY_SIMPLEX,
+                    #                 0.5, (0, 255, 0))
+                    #     cv2.rectangle(resized_image, (int(rectangle[0]), int(rectangle[1])),
+                    #                 (int(rectangle[2]), int(rectangle[3])),
+                    #                 (255, 0, 0), 1)
+
+                    # if args.net == "ALL":
+                    #     for point in points:
+                    #         for i in range(0, 10, 2):
+                    #             cv2.circle(resized_image, (int(point[i]), int(
+                    #                 point[i + 1])), 2, (0, 255, 0))
+                    cv2.imshow("MTCNN-Tenssorflow wangbm", img)
                     frameCount = frameCount + 1
+
                     if args.save_image:
                         outputFilePath = os.path.join(output_directory, filename)
-                        cv2.imwrite(outputFilePath, resized_image)
+                        cv2.imwrite(outputFilePath, img)
+                        fw.write('{:s} {:.3f} {:.1f} {:.1f} {:.1f} {:.1f}\n'.format(filename[:-4], rectangles[4], rectangles[0], rectangles[1], rectangles[2], rectangles[3]))
+
                     if cv2.waitKey(1) & 0xFF == ord('q'):
                         cv2.destroyAllWindows()
                         break
@@ -182,7 +221,7 @@ def main(args):
     detect_average_time = detect_totalTime/frameCount
     print("*" * 50)
     print("detection average time: " + str(detect_average_time) + "ms" )
-    print("detection fps: " + str(1/(detect_average_time/1000)))
+    print("detection fps: " + str(1000/detect_average_time))
 
 def parse_arguments(argv):
 
@@ -207,16 +246,14 @@ def parse_arguments(argv):
                         help='The minimum size of face to detect.', default=20)
     parser.add_argument('--factor', type=float,
                         help='The scale stride of orginal image', default=0.7)
-    parser.add_argument('--save_image', type=bool,
-                        help='Whether to save the result image', default=False)
-    parser.add_argument('--save_path', type=str,
-                        help='Where to save the result image', default=False)                    
-    parser.add_argument('--save_name', type=str,
-                        help='If save_image is true, specify the output path.',
-                        default='result.jpg')
+
+    parser.add_argument('--save_image', type=str,
+                        help='Whether or where to save the result image', default=False)  
+
+    parser.add_argument('--save_bbox_coordinates', type=str,
+                        help='Whether and where to save coordinates of bouding box', default=False)                   
 
     return parser.parse_args(argv)
-
 
 if __name__ == '__main__':
     main(parse_arguments(sys.argv[1:]))
