@@ -64,7 +64,7 @@ def main(args):
     detect_totalTime = 0.0
     totalTime = 0.0
     frameCount = 0
-
+    
     # Does there need store result images or not
     # If yes, check the directory which store result is existed or not
     # If the directory is existed, delete the directory recursively then recreate the directory.
