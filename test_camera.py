@@ -230,6 +230,7 @@ def main(args):
                                 break
 
                     video_capture.release()
+                    fw.close()
         
                     detect_average_time = detect_totalTime/frameCount
                     print("*" * 50)
