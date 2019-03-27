@@ -216,7 +216,8 @@ def main(args):
                             if args.save_image:
                                 outputFilePath = os.path.join(output_directory, str(frameCount) + ".jpg")
                                 cv2.imwrite(outputFilePath, frame)
-                                fw.write('{:s} {:.3f} {:.1f} {:.1f} {:.1f} {:.1f}\n'.format(str(frameCount), rectangles[4], rectangles[0], rectangles[1], rectangles[2], rectangles[3]))
+                                for rectangle in rectangles:
+                                    fw.write('{:s} {:.3f} {:.1f} {:.1f} {:.1f} {:.1f}\n'.format(str(frameCount), rectangle[4], rectangle[0], rectangle[1], rectangle[2], rectangle[3]))
 
                             if args.save_camera_images:
                                 sourceFilePath = os.path.join(source_directory, str(frameCount) + ".jpg")
