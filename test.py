@@ -191,21 +191,6 @@ def main(args):
                         points = None # the others
 
                     add_overlays(img, rectangles, points, 1000/(end_time - start_time), 1/args.resize, 1/args.resize)
-                    
-                    # for rectangle in rectangles:
-                    #     cv2.putText(resized_image, str(rectangle[4]),
-                    #                 (int(rectangle[0]), int(rectangle[1])),
-                    #                 cv2.FONT_HERSHEY_SIMPLEX,
-                    #                 0.5, (0, 255, 0))
-                    #     cv2.rectangle(resized_image, (int(rectangle[0]), int(rectangle[1])),
-                    #                 (int(rectangle[2]), int(rectangle[3])),
-                    #                 (255, 0, 0), 1)
-
-                    # if args.net == "ALL":
-                    #     for point in points:
-                    #         for i in range(0, 10, 2):
-                    #             cv2.circle(resized_image, (int(point[i]), int(
-                    #                 point[i + 1])), 2, (0, 255, 0))
                     cv2.imshow("MTCNN-Tenssorflow wangbm", img)
                     frameCount = frameCount + 1
 
