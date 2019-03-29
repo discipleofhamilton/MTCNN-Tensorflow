@@ -203,8 +203,8 @@ def main(args):
                     if cv2.waitKey(1) & 0xFF == ord('q'):
                         cv2.destroyAllWindows()
                         break
-    
-    fw.close()
+                if args.save_image:
+                    fw.close()
     detect_average_time = detect_totalTime/frameCount
     print("*" * 50)
     print("detection average time: " + str(detect_average_time) + "ms" )
