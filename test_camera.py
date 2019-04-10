@@ -203,8 +203,6 @@ def main(args):
                             end_time = time.time()*1000
                             detect_totalTime = detect_totalTime + (end_time - start_time)
 
-                            print(str(frameCount) + " time : " + str(end_time - start_time) + "ms")
-
                             if args.net == "ALL":
                                 points = np.transpose(points) # The outputs of O-Net which are faces' landmarks
                             else:
@@ -213,11 +211,21 @@ def main(args):
                             add_overlays(frame, rectangles, points, 1000/(end_time - start_time), 1/args.resize, 1/args.resize)
                             cv2.imshow("MTCNN-Tensorflow wangbm", frame)
 
+                            print("ID: {:d}, cost time: {:.1f}ms".format(frameCount, (end_time - start_time))) s
+
+                            if points is not None:
+                                for point in points:
+                                    for i in range(0, 10, 2):
+                                        point[i]   = point[i] * (1/args.resize)
+                                        point[i+1] = point[i+1] * (1/args.resize)
+                                        print("\tID: {:d}, face landmarks x = {:.1f}, y = {:.1f}".format(int(i/2+1), point[i], point[i+1]))
+
                             if args.save_image:
                                 outputFilePath = os.path.join(output_directory, str(frameCount) + ".jpg")
                                 cv2.imwrite(outputFilePath, frame)
                                 for rectangle in rectangles:
                                     fw.write('{:s} {:.3f} {:.1f} {:.1f} {:.1f} {:.1f}\n'.format(str(frameCount), rectangle[4], rectangle[0], rectangle[1], rectangle[2], rectangle[3]))
+                                fw.close()
 
                             if args.save_camera_images:
                                 sourceFilePath = os.path.join(source_directory, str(frameCount) + ".jpg")
@@ -230,8 +238,6 @@ def main(args):
                                 break
 
                     video_capture.release()
-                    fw.close()
-        
                     detect_average_time = detect_totalTime/frameCount
                     print("*" * 50)
                     print("detection average time: " + str(detect_average_time) + "ms" )
